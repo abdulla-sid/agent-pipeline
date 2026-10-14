@@ -3,7 +3,6 @@
   "test": "npm test",
   "protected_branches": ["main", "master", "development", "develop", "production", "release/*"],
   "local_only": [".pipeline/", ".env"],
-  "block_attribution": false,
   "loop": {
     "model": "claude-opus-5-5",
     "effort": "high",

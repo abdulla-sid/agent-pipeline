@@ -119,8 +119,11 @@ class GitGuardTest(unittest.TestCase):
 
     def test_attribution(self):
         msg = 'git commit -m "x\n\nCo-Authored-By: Claude <noreply@anthropic.com>"'
-        self.assertAllowed(msg)
-        self.assertDenied(msg, config={"block_attribution": True})
+        self.assertDenied(msg)
+        self.assertDenied("git commit -F - <<'EOF'\nx\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF")
+        self.assertDenied('gh pr create --title x --body "x\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)"')
+        self.assertAllowed('gh pr create --title x --body "fixes the claude model picker"')
+        self.assertAllowed('git commit -m "x"')
 
     def test_escape_hatch(self):
         ev = {"tool_name": "Bash", "tool_input": {"command": "git push origin main"}, "cwd": self.repo}

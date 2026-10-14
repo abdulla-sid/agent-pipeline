@@ -79,9 +79,8 @@ def main(argv):
         cfg = config(args[0])
         loop = dict(DEFAULT_LOOP, **cfg.get("loop", {}))
         allow = READ_ONLY + [f"Bash({c})" for c in (cfg.get("build"), cfg.get("test")) if c] + loop["allow"]
-        out = {"permissions": {"allow": allow, "deny": DENY}}
-        if cfg.get("block_attribution"):
-            out["attribution"] = {"commit": "", "pr": ""}
+        out = {"permissions": {"allow": allow, "deny": DENY},
+               "attribution": {"commit": "", "pr": ""}, "includeCoAuthoredBy": False}
         print(json.dumps(out, indent=2))
     elif cmd == "result":
         last = None

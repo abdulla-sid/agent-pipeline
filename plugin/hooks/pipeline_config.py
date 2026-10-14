@@ -12,7 +12,6 @@ import sys
 DEFAULTS = {
     "protected_branches": ["main", "master", "development", "develop", "production", "release/*"],
     "local_only": [".pipeline/", ".env"],
-    "block_attribution": False,
 }
 
 

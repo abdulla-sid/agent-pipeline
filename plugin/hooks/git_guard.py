@@ -7,7 +7,7 @@
   - `git push` whose destination is a protected branch, or any force push
   - creating a branch that would track a protected branch (`checkout -b x origin/main`),
     or pointing an upstream at one; this is how a "Sync" click lands commits on main
-  - optional: commit messages carrying a Claude attribution trailer
+  - Claude attribution (Co-Authored-By / "Generated with Claude") in a commit or `gh pr` body
 
 Exit 0 with no output = allow. Anything this script cannot parse is allowed:
 deny rules in settings are the place for string-matchable bans.
@@ -180,6 +180,8 @@ def main():
     if ev.get("tool_name") != "Bash" or os.environ.get("PIPELINE_GUARD", "").lower() == "off":
         return
     cmd = (ev.get("tool_input") or {}).get("command", "")
+    if re.search(r"\bgh\s+pr\s+(create|edit|comment|review)\b", cmd) and ATTRIBUTION.search(cmd):
+        deny("git_guard: no Claude attribution in PRs, ever. Remove the Generated-with / Co-Authored-By line.")
     if "git" not in cmd:
         return
     for cwd, sub, args in invocations(cmd, ev.get("cwd") or project_root()):
@@ -191,9 +193,9 @@ def main():
             if current and is_protected(current, cfg):
                 deny(f"git_guard: you are on protected branch `{current}`. "
                      f"Create a working branch first (git switch -c <name>), then commit.")
-            if cfg.get("block_attribution") and ATTRIBUTION.search(cmd):
-                deny("git_guard: this project does not allow Claude attribution in commits. "
-                     "Commit again without the trailer.")
+            if ATTRIBUTION.search(cmd):
+                deny("git_guard: no Claude attribution in commits, ever. "
+                     "Commit again without the Co-Authored-By / Generated-with line.")
         elif sub == "push":
             check_push(cwd, args, cfg)
         elif sub in ("checkout", "switch", "branch"):

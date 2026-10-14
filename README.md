@@ -26,7 +26,7 @@ Nothing else stops for approval. Local commits are easy to undo.
 
 | Part | What it does |
 | --- | --- |
-| `plugin/hooks/git_guard.py` | Denies: staging local-only paths (judged by what `git add` would really stage); committing on a protected branch; pushing to a protected branch; force pushes; creating branches that would track a protected branch (`checkout -b x origin/main`). Optionally denies Claude attribution trailers. |
+| `plugin/hooks/git_guard.py` | Denies: staging local-only paths (judged by what `git add` would really stage); committing on a protected branch; pushing to a protected branch; force pushes; creating branches that would track a protected branch (`checkout -b x origin/main`); any Claude attribution in a commit or PR. The loop also turns attribution off in its settings. |
 | `plugin/hooks/card_guard.py` | Loop only. Stops a session from ending while its card still says IN_PROGRESS. |
 | `plugin/hooks/pin_freshness.py` | Loop only. For each `Pinned: <repo> <branch> @ <sha>` line on a card, tells the session whether that ref has moved since. |
 | `/agent-pipeline:kickoff` | Turns an epic into `.pipeline/<EPIC>/PLAN.md` plus one card per ticket. |
