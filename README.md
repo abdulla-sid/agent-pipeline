@@ -42,7 +42,7 @@ claude plugin marketplace add ~/Projects/agent-pipeline
 claude plugin install agent-pipeline@agent-pipeline
 ```
 
-After editing this repo, run `claude plugin marketplace update agent-pipeline` so installed sessions pick up the change. The loop always loads the plugin straight from this folder with `--plugin-dir`, so it never needs updating.
+The plugin loads in place from `plugin/`, so edits take effect at the next session start (or `/reload-plugins`). The loop loads it from the same folder with `--plugin-dir`.
 
 ## Use in a project
 

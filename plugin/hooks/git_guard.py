@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from pipeline_config import deny, is_protected, load_config, project_root, read_event  # noqa: E402
 
 SEPARATORS = {";", "&&", "||", "|", "&", "(", ")"}
+HEREDOC = re.compile(r"<<-?\s*(['\"]?)(\w+)\1[^\n]*\n.*?\n\s*\2\b", re.S)
 ATTRIBUTION = re.compile(r"co-authored-by:\s*claude|generated with \[?claude", re.I)
 
 
@@ -34,8 +35,13 @@ def git(cwd, *args):
         return ""
 
 
-def invocations(cmd):
-    """Yield (cwd_override, subcommand, args) for every `git ...` in a shell command."""
+def invocations(cmd, base):
+    """Yield (cwd, subcommand, args) for every `git ...` in a shell command.
+
+    Follows `cd` between segments and `git -C`, so each check runs in the repo git would.
+    Heredoc bodies are data (scripts, commit messages), so they're removed before parsing.
+    """
+    cmd = HEREDOC.sub(" ", cmd)
     try:
         lex = shlex.shlex(cmd, posix=True, punctuation_chars=True)
         lex.whitespace_split = True
@@ -50,17 +56,23 @@ def invocations(cmd):
         else:
             cur.append(t)
     segments.append(cur)
+    here = base
     for seg in segments:
+        if seg and seg[0] in ("cd", "pushd"):
+            target = seg[1] if len(seg) > 1 else "~"
+            if target != "-":
+                here = os.path.join(here, os.path.expanduser(target))
+            continue
         for i, t in enumerate(seg):
             if t != "git" and not t.endswith("/git"):
                 continue
-            rest, cwd = seg[i + 1:], None
+            rest, cwd = seg[i + 1:], here
             while rest and rest[0].startswith("-"):
                 opt = rest.pop(0)
                 if opt in ("-C", "-c", "--git-dir", "--work-tree") and rest:
                     val = rest.pop(0)
                     if opt == "-C":
-                        cwd = val
+                        cwd = os.path.join(cwd, os.path.expanduser(val))
             if rest:
                 yield cwd, rest[0], rest[1:]
 
@@ -170,10 +182,8 @@ def main():
     cmd = (ev.get("tool_input") or {}).get("command", "")
     if "git" not in cmd:
         return
-    root = project_root()
-    cfg = load_config(root)
-    for cwd, sub, args in invocations(cmd):
-        cwd = os.path.join(ev.get("cwd") or root, cwd) if cwd else (ev.get("cwd") or root)
+    for cwd, sub, args in invocations(cmd, ev.get("cwd") or project_root()):
+        cfg = load_config(git(cwd, "rev-parse", "--show-toplevel") or cwd)
         if sub == "add":
             check_add(cwd, args, cfg)
         elif sub == "commit":

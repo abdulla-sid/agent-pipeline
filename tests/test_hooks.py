@@ -83,6 +83,7 @@ class GitGuardTest(unittest.TestCase):
     def test_bare_push_follows_upstream(self):
         sh(self.repo, "git", "branch", "--set-upstream-to=origin/main")
         self.assertDenied("git push")
+        os.makedirs(os.path.join(self.repo, "sub"))
         self.assertDenied("cd sub; git push")
 
     def test_commit_on_protected(self):
@@ -99,6 +100,22 @@ class GitGuardTest(unittest.TestCase):
         self.assertAllowed("git checkout -b feature/y --no-track origin/main")
         self.assertAllowed("git checkout -b feature/y main")
         self.assertAllowed("git switch -c main origin/main")
+
+    def test_follows_cd_and_dash_c(self):
+        sh(self.repo, "git", "switch", "-q", "main")
+        other = os.path.join(self.tmp, "other")
+        sh(self.tmp, "git", "init", "-q", "-b", "main", other)
+        os.makedirs(os.path.join(other, ".claude"))
+        write(os.path.join(other, ".claude", "pipeline.json"), json.dumps({"protected_branches": []}))
+        self.assertDenied('git commit -m "x"')
+        self.assertAllowed(f'cd {other} && git commit -m "x"')
+        self.assertAllowed(f'git -C {other} commit -m "x"')
+        self.assertDenied(f'cd {other} && cd {self.repo} && git commit -m "x"')
+
+    def test_heredoc_body_is_data(self):
+        sh(self.repo, "git", "switch", "-q", "main")
+        self.assertAllowed("python3 - <<'EOF'\ns = 'git commit -m x'\nEOF\necho done")
+        self.assertDenied("cat > f <<EOF\ngit push origin main\nEOF\ngit commit -m x")
 
     def test_attribution(self):
         msg = 'git commit -m "x\n\nCo-Authored-By: Claude <noreply@anthropic.com>"'
