@@ -1,0 +1,13 @@
+{
+  "name": "agent-pipeline",
+  "description": "Local marketplace for the agent-pipeline plugin",
+  "owner": { "name": "Abdullah Siddiqui" },
+  "plugins": [
+    {
+      "name": "agent-pipeline",
+      "description": "Ticket-by-ticket Claude Code pipeline: git guards, card-based tickets, proof-gated review",
+      "source": "./plugin",
+      "category": "development"
+    }
+  ]
+}

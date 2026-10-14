@@ -1,0 +1,6 @@
+{
+  "name": "agent-pipeline",
+  "version": "0.1.0",
+  "description": "Ticket-by-ticket Claude Code pipeline: git guards, card-based tickets, proof-gated review",
+  "author": { "name": "Abdullah Siddiqui" }
+}
